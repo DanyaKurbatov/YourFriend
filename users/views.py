@@ -5,11 +5,11 @@ from sqlalchemy.orm import Session
 from db import get_db
 from users.operations import authenticate_user, create_access_token, create_user
 from users.schemas import UserCreate, Token
+from config import ACCESS_TOKEN_EXPIRE_MINUTES
 
 users_router = APIRouter(prefix="/users",
                          tags=["Users"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 @users_router.post("/token", response_model=Token)
