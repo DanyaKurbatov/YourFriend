@@ -7,11 +7,3 @@
 * PostgreSQL - Database
 * Alembic
 
-##Goals
-
-
-##Structure
-1. Profile
-2. Chat
-
-...
