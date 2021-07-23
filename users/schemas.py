@@ -13,7 +13,6 @@ class UserInDB(UserBase):
 class UserCreate(UserBase):
     password: str
     email: EmailStr
-    name: str
 
 
 class Token(BaseModel):
