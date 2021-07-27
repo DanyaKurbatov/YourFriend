@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from config import SECRET_KEY, ALGORITHM, oauth2_scheme
 from db import get_db
-from .operations import get_user
-from .schemas import TokenData, User
+from users.operations import get_user
+from users.schemas import TokenData, User
 
 
 async def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
