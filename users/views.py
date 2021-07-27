@@ -1,20 +1,21 @@
 from fastapi import Depends, HTTPException, status, APIRouter
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from sqlalchemy.orm import Session
 from db import get_db
-from users.operations import authenticate_user, create_access_token, create_user, get_users
+from users.operations import authenticate_user, create_access_token, \
+    create_user, get_users, get_user_by_id, delete_user_by_id
 from users.schemas import UserCreate, Token
 from config import ACCESS_TOKEN_EXPIRE_MINUTES
+from users.users import get_current_active_user
 
 users_router = APIRouter(prefix="/users",
                          tags=["Users"])
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 @users_router.post("/login", response_model=Token)
-async def login_for_access_token(db: Session = Depends(get_db),
-                                 form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(db: Session = Depends(get_db),
+                form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -38,10 +39,30 @@ async def create_users(user: UserCreate, db: Session = Depends(get_db)):
                             detail="User already exists")
 
 
-@users_router.get('/')
-async def get_users_on(db: Session = Depends(get_db)):
+@users_router.get('/', dependencies=[Depends(get_current_active_user)])
+async def get_users_all(db: Session = Depends(get_db)):
     try:
         return get_users(db)
     except:
         raise HTTPException(status_code=500,
                             detail="INTERNAL_SERVER_ERROR")
+
+
+@users_router.get('/{id}', dependencies=[Depends(get_current_active_user)])
+async def get_user_by(id: int,
+                      db: Session = Depends(get_db)):
+    user = get_user_by_id(db, id)
+    if user is None:
+        raise HTTPException(status_code=404,
+                            detail="User not found")
+    return user
+
+
+@users_router.delete('/{id}', dependencies=[Depends(get_current_active_user)])
+async def delete_user_by(id: int,
+                         db: Session = Depends(get_db)):
+    if get_user_by_id(db, id) is None:
+        raise HTTPException(status_code=404,
+                            detail="User not found")
+    user = delete_user_by_id(db, id)
+    return user

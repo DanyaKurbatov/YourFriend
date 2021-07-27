@@ -13,6 +13,7 @@ class User(Base):
     email = Column(String, unique=True)
     is_superuser = Column(Boolean, default=False)
     is_active = Column(Boolean, default=False)
+    created = Column(DateTime)
 
 
 class Profile(Base):

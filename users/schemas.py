@@ -6,6 +6,15 @@ class UserBase(BaseModel):
     username: str
 
 
+class User(UserBase):
+    id: Optional[int] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    email: Optional[str] = None
+    is_superuser: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+
 class UserInDB(UserBase):
     hashed_password: str
 

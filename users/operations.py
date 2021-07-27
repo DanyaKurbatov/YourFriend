@@ -1,16 +1,10 @@
 from typing import Optional
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from . import models
-from .schemas import TokenData, UserCreate
-from jose import JWTError, jwt
-from fastapi.security import OAuth2PasswordBearer
-from fastapi import Depends, HTTPException, status
-from passlib.context import CryptContext
-from config import SECRET_KEY, ALGORITHM
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from users import models
+from users.schemas import UserCreate
+from jose import jwt
+from config import pwd_context, SECRET_KEY, ALGORITHM
 
 
 def verify_password(plain_password, hashed_password):
@@ -36,6 +30,18 @@ def get_user(db: Session, username: str):
     return db.query(models.User).filter(
         models.User.username == username).first()
 
+
+def get_user_by_id(db: Session, id: int):
+    return db.query(models.User).filter(
+        models.User.id == id).first()
+
+
+def delete_user_by_id(db: Session, id: int):
+    db.query(models.User).filter(
+        models.User.id == id).delete()
+    db.commit()
+
+
 def get_users(db: Session):
     return db.query(models.User).all()
 
@@ -58,28 +64,3 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
-
-
-async def get_current_user(db: Session, token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username)
-    except JWTError:
-        raise credentials_exception
-    user = get_user(db, username=token_data.username)
-    if user is None:
-        raise credentials_exception
-    return user
-
-# async def get_current_active_user(current_user: UserInDB = Depends(get_current_user)):
-#     if current_user.is_active:
-#         raise HTTPException(status_code=400, detail="Inactive user")
-#     return current_user
